@@ -93,7 +93,8 @@ class LivreurDetailPage extends StatelessWidget {
                   Text(livreur.telephone, style: const TextStyle(fontSize: 16, color: Colors.grey)),
                   
                   const SizedBox(height: 20),
-                  const SizedBox(height: 16),
+                  _buildStatusBadge(livreur.statut),
+                  const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -101,7 +102,10 @@ class LivreurDetailPage extends StatelessWidget {
                         onPressed: () => _launchUrl('tel:${livreur.telephone}'),
                         icon: const Icon(Bootstrap.telephone_fill),
                         label: const Text('Appeler'),
-                        style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).primaryColor,
+                          foregroundColor: Colors.white,
+                        ),
                       ),
                       ElevatedButton.icon(
                         onPressed: () {
@@ -110,7 +114,10 @@ class LivreurDetailPage extends StatelessWidget {
                         },
                         icon: const Icon(Bootstrap.whatsapp),
                         label: const Text('WhatsApp'),
-                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF25D366)), // WhatsApp Brand Color
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF25D366),
+                          foregroundColor: Colors.white,
+                        ),
                       ),
                     ],
                   ),
@@ -121,6 +128,7 @@ class LivreurDetailPage extends StatelessWidget {
                     label: const Text('Journal des courses'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Colors.white,
                       minimumSize: const Size(double.infinity, 45),
                     ),
                   ),
@@ -134,10 +142,29 @@ class LivreurDetailPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const Text('Statistiques de livraison', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Divider(),
+                  Row(
+                    children: [
+                      _buildStatCard('Total', livreur.nbLivraisonsTotal.toString(), Colors.blue),
+                      _buildStatCard('Complétées', livreur.nbLivraisonsCompletees.toString(), Colors.green),
+                      _buildStatCard('Annulées', livreur.nbLivraisonsAnnulees.toString(), Colors.red),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      _buildStatCard('Acceptées', livreur.nbLivraisonsAcceptees.toString(), Colors.orange),
+                      _buildStatCard('Refusées', livreur.nbLivraisonsRefusees.toString(), Colors.deepOrange),
+                      _buildStatCard('Ignorées', livreur.nbLivraisonsIgnorees.toString(), Colors.grey),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
                   const Text('Informations Personnelles', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const Divider(),
                   _buildInfoRow('NNI', livreur.nni),
                   _buildInfoRow('WhatsApp', livreur.whatsapp),
+                  _buildInfoRow('Créé le', livreur.createdAt.toString().split('.')[0]),
                   
                   const SizedBox(height: 20),
                   const Text('Documents & Photos', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -150,6 +177,48 @@ class LivreurDetailPage extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+  Widget _buildStatusBadge(String statut) {
+    Color color = Colors.grey;
+    if (statut == 'actif') color = Colors.green;
+    if (statut == 'inactif') color = Colors.red;
+    if (statut == 'suspendu') color = Colors.orange;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        border: Border.all(color: color),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        statut.toUpperCase(),
+        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String label, String value, Color color) {
+    return Expanded(
+      child: Card(
+        elevation: 0,
+        color: color.withOpacity(0.05),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(color: color.withOpacity(0.2)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8),
+          child: Column(
+            children: [
+              Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
+              const SizedBox(height: 4),
+              Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey), textAlign: TextAlign.center),
+            ],
+          ),
         ),
       ),
     );

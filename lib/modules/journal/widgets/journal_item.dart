@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../../core/utils/formatters.dart';
-import '../models/journal_model.dart';
+import '../models/journal_ligne_model.dart';
 import '../../../../shared/theme/app_theme.dart';
 
 class JournalItem extends StatelessWidget {
-  final JournalModel entry;
+  final JournalLigneModel entry;
 
   const JournalItem({Key? key, required this.entry}) : super(key: key);
 
@@ -44,25 +44,42 @@ class JournalItem extends StatelessWidget {
               children: [
                 const Icon(Icons.circle, size: 8, color: Colors.green),
                 const SizedBox(width: 8),
-                Expanded(child: Text(entry.lieuDepart, style: const TextStyle(fontWeight: FontWeight.w500))),
+                Expanded(
+                  child: Text(
+                    entry.placeDepartNom ?? 'ID: ${entry.placeDepartId}',
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                ),
               ],
             ),
-             Padding(
-               padding: const EdgeInsets.only(left: 3),
-               child: Container(height: 10, width: 2, color: Colors.grey.shade300),
-             ),
+            Padding(
+              padding: const EdgeInsets.only(left: 3),
+              child: Container(
+                height: 10,
+                width: 2,
+                color: Colors.grey.shade300,
+              ),
+            ),
             Row(
               children: [
                 const Icon(Icons.circle, size: 8, color: Colors.red),
                 const SizedBox(width: 8),
-                Expanded(child: Text(entry.lieuArrivee, style: const TextStyle(fontWeight: FontWeight.w500))),
+                Expanded(
+                  child: Text(
+                    entry.placeArriveeNom ?? 'ID: ${entry.placeArriveeId}',
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                ),
               ],
             ),
             if (entry.description != null && entry.description!.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
                 entry.description!,
-                style: const TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+                style: const TextStyle(
+                  color: Colors.grey,
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             ],
           ],

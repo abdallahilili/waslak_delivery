@@ -8,7 +8,13 @@
     <application
         android:label="gestion_livreurs"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:enableOnBackInvokedCallback="true">
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDe5CA8nrN_lgix4lanomjg66YhQlP2goM"/>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

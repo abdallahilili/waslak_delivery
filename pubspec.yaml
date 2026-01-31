@@ -24,6 +24,8 @@ dependencies:
   share_plus: ^7.2.1
   permission_handler: ^11.1.0
   dio: ^5.4.0
+  google_maps_flutter: ^2.5.3
+  uuid: ^4.3.3
 
   cupertino_icons: ^1.0.8
 

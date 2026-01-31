@@ -1,21 +1,19 @@
 class JournalModel {
   final String id;
   final String livreurId;
-  final double montant;
-  final String lieuDepart;
-  final String lieuArrivee;
-  final String? description;
-  final DateTime date;
+  final DateTime dateDebut;
+  final DateTime? dateFin;
+  final String statut; // "ouvert", "cloture"
+  final double total;
   final DateTime createdAt;
 
   JournalModel({
     required this.id,
     required this.livreurId,
-    required this.montant,
-    required this.lieuDepart,
-    required this.lieuArrivee,
-    this.description,
-    required this.date,
+    required this.dateDebut,
+    this.dateFin,
+    required this.statut,
+    this.total = 0.0,
     required this.createdAt,
   });
 
@@ -23,23 +21,27 @@ class JournalModel {
     return JournalModel(
       id: map['id'] ?? '',
       livreurId: map['livreur_id'] ?? '',
-      montant: (map['montant'] as num).toDouble(),
-      lieuDepart: map['lieu_depart'] ?? '',
-      lieuArrivee: map['lieu_arrivee'] ?? '',
-      description: map['description'],
-      date: DateTime.parse(map['date']),
-      createdAt: DateTime.parse(map['created_at']),
+      dateDebut: DateTime.parse(map['date_debut']),
+      dateFin: map['date_fin'] != null ? DateTime.parse(map['date_fin']) : null,
+      statut: map['statut'] ?? 'ouvert',
+      total: (map['total'] as num?)?.toDouble() ?? 0.0,
+      createdAt: map['created_at'] != null 
+          ? DateTime.parse(map['created_at']) 
+          : DateTime.now(),
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
       'livreur_id': livreurId,
-      'montant': montant,
-      'lieu_depart': lieuDepart,
-      'lieu_arrivee': lieuArrivee,
-      'description': description,
-      'date': date.toIso8601String(),
+      'date_debut': dateDebut.toIso8601String(),
+      'date_fin': dateFin?.toIso8601String(),
+      'statut': statut,
+      'total': total,
     };
   }
+
+  // Getters de compatibilité
+  double get montant => total;
+  DateTime get date => dateDebut;
 }

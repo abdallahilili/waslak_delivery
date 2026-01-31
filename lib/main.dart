@@ -9,7 +9,7 @@ import 'modules/home/views/home_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   await SupabaseConfig.initialize();
 
   runApp(const MyApp());
@@ -27,7 +27,11 @@ class MyApp extends StatelessWidget {
       initialBinding: AuthBinding(),
       initialRoute: Routes.LOGIN,
       getPages: [
-        GetPage(name: Routes.LOGIN, page: () => const LoginPage(), binding: AuthBinding()),
+        GetPage(
+          name: Routes.LOGIN,
+          page: () => const LoginPage(),
+          binding: AuthBinding(),
+        ),
         GetPage(name: Routes.HOME, page: () => const HomePage()),
       ],
     );

@@ -51,7 +51,8 @@ class LivreurController extends GetxController {
     String nom,
     String nni,
     String telephone,
-    String? whatsapp, {
+    String? whatsapp,
+    String statut, {
     File? photoProfil,
     File? photoCni,
     File? photoCarteGrise,
@@ -73,6 +74,7 @@ class LivreurController extends GetxController {
         'nni': nni,
         'telephone': telephone,
         'whatsapp': whatsapp,
+        'statut': statut,
         'photo_profil_url': urlProfil,
         'photo_cni_url': urlCni,
         'photo_carte_grise_url': urlCarteGrise,

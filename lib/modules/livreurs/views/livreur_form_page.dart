@@ -41,7 +41,10 @@ class _LivreurFormPageState extends State<LivreurFormPage> {
     _nniCtrl = TextEditingController(text: widget.livreur?.nni);
     _phoneCtrl = TextEditingController(text: widget.livreur?.telephone);
     _whatsappCtrl = TextEditingController(text: widget.livreur?.whatsapp);
+    _statut = widget.livreur?.statut ?? 'actif';
   }
+  
+  String _statut = 'actif';
 
   Future<void> _pickImage(String type) async {
     final XFile? file = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
@@ -109,6 +112,17 @@ class _LivreurFormPageState extends State<LivreurFormPage> {
                 AppInput(label: 'Téléphone', controller: _phoneCtrl, validator: Validators.phoneNumber, keyboardType: TextInputType.phone),
                 AppInput(label: 'Whatsapp (Optionnel)', controller: _whatsappCtrl, keyboardType: TextInputType.phone),
 
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  value: _statut,
+                  decoration: const InputDecoration(labelText: 'Statut du livreur'),
+                  items: ['actif', 'inactif', 'suspendu']
+                      .map((e) => DropdownMenuItem(value: e, child: Text(e.toUpperCase())))
+                      .toList(),
+                  onChanged: (v) => setState(() => _statut = v!),
+                ),
+                const SizedBox(height: 10),
+
                 const Divider(),
                 const Text('Documents', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
@@ -140,6 +154,7 @@ class _LivreurFormPageState extends State<LivreurFormPage> {
                           _nniCtrl.text,
                           _phoneCtrl.text,
                           _whatsappCtrl.text,
+                          _statut,
                           photoProfil: _profilImage,
                           photoCni: _cniImage,
                           photoCarteGrise: _carteGriseImage,
@@ -154,6 +169,7 @@ class _LivreurFormPageState extends State<LivreurFormPage> {
                             'nni': _nniCtrl.text,
                             'telephone': _phoneCtrl.text,
                             'whatsapp': _whatsappCtrl.text,
+                            'statut': _statut,
                          });
                       }
                     }

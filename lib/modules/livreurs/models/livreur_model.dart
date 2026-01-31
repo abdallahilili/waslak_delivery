@@ -9,6 +9,13 @@ class LivreurModel {
   final String? photoCarteGriseUrl;
   final String? photoAssuranceUrl;
   final String? photoMotoUrl;
+  final String statut;
+  final int nbLivraisonsAcceptees;
+  final int nbLivraisonsAnnulees;
+  final int nbLivraisonsCompletees;
+  final int nbLivraisonsIgnorees;
+  final int nbLivraisonsRefusees;
+  final int nbLivraisonsTotal;
   final DateTime createdAt;
 
   LivreurModel({
@@ -22,6 +29,13 @@ class LivreurModel {
     this.photoCarteGriseUrl,
     this.photoAssuranceUrl,
     this.photoMotoUrl,
+    required this.statut,
+    this.nbLivraisonsAcceptees = 0,
+    this.nbLivraisonsAnnulees = 0,
+    this.nbLivraisonsCompletees = 0,
+    this.nbLivraisonsIgnorees = 0,
+    this.nbLivraisonsRefusees = 0,
+    this.nbLivraisonsTotal = 0,
     required this.createdAt,
   });
 
@@ -37,7 +51,16 @@ class LivreurModel {
       photoCarteGriseUrl: map['photo_carte_grise_url'],
       photoAssuranceUrl: map['photo_assurance_url'],
       photoMotoUrl: map['photo_moto_url'],
-      createdAt: DateTime.parse(map['created_at']),
+      statut: map['statut'] ?? 'actif',
+      nbLivraisonsAcceptees: map['nb_livraisons_acceptees'] ?? 0,
+      nbLivraisonsAnnulees: map['nb_livraisons_annulees'] ?? 0,
+      nbLivraisonsCompletees: map['nb_livraisons_completees'] ?? 0,
+      nbLivraisonsIgnorees: map['nb_livraisons_ignorees'] ?? 0,
+      nbLivraisonsRefusees: map['nb_livraisons_refusees'] ?? 0,
+      nbLivraisonsTotal: map['nb_livraisons_total'] ?? 0,
+      createdAt: map['created_at'] != null 
+          ? DateTime.parse(map['created_at']) 
+          : DateTime.now(),
     );
   }
 
@@ -52,6 +75,9 @@ class LivreurModel {
       'photo_carte_grise_url': photoCarteGriseUrl,
       'photo_assurance_url': photoAssuranceUrl,
       'photo_moto_url': photoMotoUrl,
+      'statut': statut,
+      // Note: Counters are read-only side Flutter, managed by Edge Functions.
+      // So they are not included in toMap() for insert/update.
     };
   }
 }

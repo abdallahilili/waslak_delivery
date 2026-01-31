@@ -16,6 +16,16 @@ class LivreurListPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Liste des Livreurs'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: controller.fetchLivreurs,
+            tooltip: 'Actualiser',
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => Get.to(() => LivreurFormPage()),
         child: const Icon(Icons.add),
@@ -39,26 +49,40 @@ class LivreurListPage extends StatelessWidget {
               }
 
               if (controller.livreurs.isEmpty) {
-                return const Center(child: Text('Aucun livreur trouvé'));
+                return RefreshIndicator(
+                  onRefresh: controller.fetchLivreurs,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Container(
+                      height: MediaQuery.of(context).size.height * 0.5,
+                      alignment: Alignment.center,
+                      child: const Text('Aucun livreur trouvé'),
+                    ),
+                  ),
+                );
               }
 
-              return ListView.builder(
-                padding: const EdgeInsets.only(bottom: 80),
-                itemCount: controller.livreurs.length,
-                itemBuilder: (context, index) {
-                  final livreur = controller.livreurs[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 4,
-                    ),
-                    child: LivreurCard(
-                      livreur: livreur,
-                      onTap: () =>
-                          Get.to(() => LivreurDetailPage(livreur: livreur)),
-                    ),
-                  );
-                },
+              return RefreshIndicator(
+                onRefresh: controller.fetchLivreurs,
+                child: ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 80),
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  itemCount: controller.livreurs.length,
+                  itemBuilder: (context, index) {
+                    final livreur = controller.livreurs[index];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
+                      child: LivreurCard(
+                        livreur: livreur,
+                        onTap: () =>
+                            Get.to(() => LivreurDetailPage(livreur: livreur)),
+                      ),
+                    );
+                  },
+                ),
               );
             }),
           ),
