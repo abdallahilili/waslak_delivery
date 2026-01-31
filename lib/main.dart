@@ -7,9 +7,12 @@ import 'modules/auth/bindings/auth_binding.dart';
 import 'modules/auth/views/login_page.dart';
 import 'modules/home/views/home_page.dart';
 
+import 'package:intl/date_symbol_data_local.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await initializeDateFormatting('fr', null);
   await SupabaseConfig.initialize();
 
   runApp(const MyApp());

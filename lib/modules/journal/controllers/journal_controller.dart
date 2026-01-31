@@ -8,39 +8,59 @@ import '../../../core/utils/pdf_helper.dart';
 class JournalController extends GetxController {
   final _client = Supabase.instance.client;
   
-  final currentJournal = Rxn<JournalModel>();
-  final journalLines = <JournalLigneModel>[].obs;
+  final currentJournal = Rxn<JournalModel>(); // Keeps track of the OPEN journal for easy access
+  final journals = <JournalModel>[].obs; // List of all journals
+  
+  // Map to store lines for each journal: key is journalId
+  final journalLinesMap = <String, List<JournalLigneModel>>{}.obs;
+  
   final isLoading = false.obs;
   final isSaving = false.obs;
 
-  // Journals list for history
-  final journals = <JournalModel>[].obs;
+  // Helper to get lines for a specific journal
+  List<JournalLigneModel> getLinesForJournal(String journalId) {
+    return journalLinesMap[journalId] ?? [];
+  }
 
-  Future<void> fetchActiveJournal(String livreurId) async {
+  Future<void> fetchJournals(String livreurId) async {
     try {
       isLoading.value = true;
       final response = await _client
           .from('journaux')
           .select()
           .eq('livreur_id', livreurId)
-          .eq('statut', 'ouvert')
-          .maybeSingle();
+          .order('date_debut', ascending: false);
           
-      if (response != null) {
-        currentJournal.value = JournalModel.fromMap(response);
-        await fetchJournalLines(currentJournal.value!.id);
-      } else {
+      final data = response as List<dynamic>;
+      final list = data.map((json) => JournalModel.fromMap(json)).toList();
+
+      // Sort: 'ouvert' first, then by date desc (already sorted by query mostly, but let's ensure 'ouvert' is top)
+      list.sort((a, b) {
+        if (a.statut == 'ouvert' && b.statut != 'ouvert') return -1;
+        if (a.statut != 'ouvert' && b.statut == 'ouvert') return 1;
+        // If same status, keep existing order (date desc)
+        return b.dateDebut.compareTo(a.dateDebut);
+      });
+
+      journals.value = list;
+
+      // Update currentJournal reference to the open one if exists
+      try {
+        currentJournal.value = list.firstWhere((j) => j.statut == 'ouvert');
+        // Automatically fetch lines for the open journal
+        await fetchLinesForJournal(currentJournal.value!.id);
+      } catch (e) {
         currentJournal.value = null;
-        journalLines.clear();
       }
+      
     } catch (e) {
-      Get.snackbar('Erreur', 'Impossible de charger le journal actif: $e');
+      Get.snackbar('Erreur', 'Impossible de charger les journaux: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  Future<void> fetchJournalLines(String journalId) async {
+  Future<void> fetchLinesForJournal(String journalId) async {
     try {
       final response = await _client
           .from('journal_lignes')
@@ -49,7 +69,12 @@ class JournalController extends GetxController {
           .order('date', ascending: false);
           
       final data = response as List<dynamic>;
-      journalLines.value = data.map((json) => JournalLigneModel.fromMap(json)).toList();
+      final lines = data.map((json) => JournalLigneModel.fromMap(json)).toList();
+      
+      journalLinesMap[journalId] = lines;
+      // Force update of the map to trigger Obx
+      journalLinesMap.refresh(); 
+      
     } catch (e) {
       Get.snackbar('Erreur', 'Impossible de charger les lignes du journal: $e');
     }
@@ -65,8 +90,20 @@ class JournalController extends GetxController {
         'total': 0,
       }).select().single();
       
-      currentJournal.value = JournalModel.fromMap(response);
-      journalLines.clear();
+      final newJournal = JournalModel.fromMap(response);
+      
+      // Add to list and sort
+      journals.add(newJournal);
+      // Re-sort
+      journals.sort((a, b) {
+        if (a.statut == 'ouvert' && b.statut != 'ouvert') return -1;
+         if (a.statut != 'ouvert' && b.statut == 'ouvert') return 1;
+        return b.dateDebut.compareTo(a.dateDebut);
+      });
+      
+      currentJournal.value = newJournal;
+      journalLinesMap[newJournal.id] = [];
+      
       Get.snackbar('Succès', 'Nouveau journal ouvert');
     } catch (e) {
       Get.snackbar('Erreur', 'Erreur lors de l\'ouverture du journal: $e');
@@ -96,10 +133,27 @@ class JournalController extends GetxController {
         'description': description,
         'date': DateTime.now().toIso8601String(),
       });
+
+      // Calculate new total
+      final linesResponse = await _client
+          .from('journal_lignes')
+          .select('montant')
+          .eq('journal_id', journalId);
+          
+      final linesData = linesResponse as List<dynamic>;
+      double newTotal = 0;
+      for (var line in linesData) {
+        newTotal += (line['montant'] as num).toDouble();
+      }
+
+      // Update journal total in database
+      await _client.from('journaux').update({
+        'total': newTotal
+      }).eq('id', journalId);
       
-      await fetchJournalLines(journalId);
-      // Refresh journal to get updated total (if updated by function)
-      await fetchActiveJournal(livreurId);
+      await fetchLinesForJournal(journalId);
+      // Refresh journals to get updated total
+      await fetchJournals(livreurId);
       
       Get.back();
       Get.snackbar('Succès', 'Ligne ajoutée');
@@ -118,8 +172,9 @@ class JournalController extends GetxController {
         'date_fin': DateTime.now().toIso8601String(),
       }).eq('id', journalId);
       
-      currentJournal.value = null;
-      journalLines.clear();
+      // Refresh list to update status and sorting
+      await fetchJournals(livreurId);
+      
       Get.snackbar('Succès', 'Journal clôturé');
     } catch (e) {
       Get.snackbar('Erreur', 'Erreur lors de la clôture: $e');

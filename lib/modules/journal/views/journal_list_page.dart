@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../controllers/journal_controller.dart';
+import '../models/journal_model.dart';
 import '../widgets/journal_item.dart';
 import 'journal_form_page.dart';
 import '../../livreurs/models/livreur_model.dart';
@@ -20,26 +21,18 @@ class _JournalListPageState extends State<JournalListPage> {
   @override
   void initState() {
     super.initState();
-    controller.fetchActiveJournal(widget.livreur.id);
+    controller.fetchJournals(widget.livreur.id);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Journal - ${widget.livreur.nom}'),
+        title: Text('Journaux - ${widget.livreur.nom}'),
         actions: [
-          Obx(() => controller.currentJournal.value != null 
-            ? IconButton(
-                icon: const Icon(Icons.print),
-                onPressed: () => controller.exportPdf(
-                  widget.livreur, 
-                  controller.currentJournal.value!, 
-                  controller.journalLines
-                ),
-                tooltip: 'Exporter PDF',
-              )
-            : const SizedBox.shrink()
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => controller.fetchJournals(widget.livreur.id),
           ),
         ],
       ),
@@ -48,92 +41,195 @@ class _JournalListPageState extends State<JournalListPage> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final journal = controller.currentJournal.value;
-
-        if (journal == null) {
+        if (controller.journals.isEmpty) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(Icons.book_outlined, size: 80, color: Colors.grey),
                 const SizedBox(height: 16),
-                const Text('Aucun journal ouvert pour ce livreur'),
+                const Text('Aucun journal trouvé'),
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
                   onPressed: () => controller.createJournal(widget.livreur.id),
                   icon: const Icon(Icons.add),
                   label: const Text('OUVRIR UN NOUVEAU JOURNAL'),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               ],
             ),
           );
         }
 
-        return Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              color: Colors.blue.withOpacity(0.1),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Journal ouvert le ${DateFormat('dd/MM HH:mm').format(journal.dateDebut)}', 
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                      Text('Total: ${journal.total} MRU', 
-                          style: const TextStyle(fontSize: 18, color: Colors.blue, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      Get.defaultDialog(
-                        title: 'Clôturer',
-                        middleText: 'Voulez-vous clôturer ce journal ?',
-                        onConfirm: () {
-                          controller.closeJournal(journal.id, widget.livreur.id);
-                          Get.back();
-                        },
-                        textCancel: 'Non',
-                        textConfirm: 'Oui, clôturer',
-                        confirmTextColor: Colors.white,
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-                    child: const Text('CLÔTURER'),
-                  ),
-                ],
+        return ListView.builder(
+          padding: const EdgeInsets.only(bottom: 80), // Space for FAB
+          itemCount: controller.journals.length,
+          itemBuilder: (context, index) {
+            final journal = controller.journals[index];
+            final isOpen = journal.statut == 'ouvert';
+
+            return Card(
+              elevation: isOpen ? 4 : 1,
+              margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+                side: isOpen
+                    ? const BorderSide(color: Colors.blue, width: 1.5)
+                    : BorderSide.none,
               ),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: controller.journalLines.isEmpty
-                  ? const Center(child: Text('Aucune course dans ce journal'))
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: controller.journalLines.length,
-                      itemBuilder: (context, index) {
-                        final line = controller.journalLines[index];
-                        return JournalItem(entry: line);
-                      },
-                    ),
-            ),
-          ],
+              child: ExpansionTile(
+                initiallyExpanded: index == 0 && isOpen,
+                shape: Border.all(color: Colors.transparent),
+                leading: CircleAvatar(
+                  backgroundColor: isOpen
+                      ? Colors.green.withOpacity(0.1)
+                      : Colors.grey.withOpacity(0.1),
+                  child: Icon(
+                    isOpen ? Icons.lock_open : Icons.lock,
+                    color: isOpen ? Colors.green : Colors.grey,
+                  ),
+                ),
+                title: Text(
+                  DateFormat(
+                    'dd MMMM yyyy HH:mm',
+                    'fr',
+                  ).format(journal.dateDebut),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isOpen ? Colors.black : Colors.grey[700],
+                  ),
+                ),
+                subtitle: Text(
+                  "Total: ${journal.total} MRU",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isOpen ? Colors.blue : Colors.grey,
+                    fontSize: 16,
+                  ),
+                ),
+                onExpansionChanged: (expanded) {
+                  if (expanded) {
+                    controller.fetchLinesForJournal(journal.id);
+                  }
+                },
+                children: [_buildJournalDetails(journal)],
+              ),
+            );
+          },
         );
       }),
-      floatingActionButton: Obx(() => controller.currentJournal.value != null 
-        ? FloatingActionButton(
-            onPressed: () => Get.to(() => JournalFormPage(
-              livreurId: widget.livreur.id, 
-              journalId: controller.currentJournal.value!.id
-            )),
+      floatingActionButton: Obx(() {
+        final openJournal = controller.currentJournal.value;
+        if (openJournal == null) {
+          return FloatingActionButton.extended(
+            onPressed: () => controller.createJournal(widget.livreur.id),
+            label: const Text("Nouveau Journal"),
+            icon: const Icon(Icons.add),
             backgroundColor: Colors.blue,
-            child: const Icon(Icons.add, color: Colors.white),
-          )
-        : const SizedBox.shrink()
-      ),
+          );
+        } else {
+          return FloatingActionButton(
+            onPressed: () => Get.to(
+              () => JournalFormPage(
+                livreurId: widget.livreur.id,
+                journalId: openJournal.id,
+              ),
+            ),
+            backgroundColor: Colors.blue,
+            child: const Icon(Icons.bike_scooter, color: Colors.white),
+            tooltip: "Ajouter course",
+          );
+        }
+      }),
+    );
+  }
+
+  Widget _buildJournalDetails(JournalModel journal) {
+    return Column(
+      children: [
+        const Divider(height: 1),
+        Container(
+          color: Colors.grey.withOpacity(0.02),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (journal.statut == 'ouvert')
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Get.defaultDialog(
+                      title: 'Clôturer',
+                      middleText: 'Voulez-vous vraiment clôturer ce journal ?',
+                      textConfirm: 'Oui, clôturer',
+                      textCancel: 'Annuler',
+                      confirmTextColor: Colors.white,
+                      onConfirm: () {
+                        controller.closeJournal(journal.id, widget.livreur.id);
+                        Get.back();
+                      },
+                      buttonColor: Colors.red,
+                    );
+                  },
+                  icon: const Icon(Icons.check_circle, size: 18),
+                  label: const Text('Clôturer'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+              if (journal.statut != 'ouvert')
+                Text(
+                  "Fermé le ${journal.dateFin != null ? DateFormat('dd/MM HH:mm').format(journal.dateFin!) : '-'}",
+                  style: const TextStyle(
+                    fontStyle: FontStyle.italic,
+                    color: Colors.grey,
+                  ),
+                ),
+              IconButton(
+                icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
+                tooltip: 'Télécharger PDF',
+                onPressed: () {
+                  final lines = controller.getLinesForJournal(journal.id);
+                  controller.exportPdf(widget.livreur, journal, lines);
+                },
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+        Obx(() {
+          final lines = controller.getLinesForJournal(journal.id);
+          // Check if lines are loaded or loading
+          // Note: fetchLines doesn't have a per-journal loading state nicely exposed yet,
+          // but Obx will update when it arrives.
+
+          if (lines.isEmpty) {
+            return const Padding(
+              padding: EdgeInsets.all(32.0),
+              child: Center(
+                child: Text(
+                  "Aucune course dans ce journal",
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+            );
+          }
+
+          return ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: lines.length,
+            itemBuilder: (context, index) {
+              return JournalItem(entry: lines[index]);
+            },
+          );
+        }),
+      ],
     );
   }
 }
