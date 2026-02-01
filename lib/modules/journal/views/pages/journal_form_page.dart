@@ -48,57 +48,76 @@ class _JournalFormPageState extends State<JournalFormPage> {
               key: _formKey,
               child: Column(
                 children: [
-                   DropdownButtonFormField<String>(
-                    value: _placeDepartId,
-                    decoration: const InputDecoration(labelText: 'Lieu de départ *'),
-                    items: _placesController.places
-                        .map((p) => DropdownMenuItem(value: p.id, child: Text(p.nom)))
-                        .toList(),
-                    onChanged: (v) => setState(() => _placeDepartId = v),
-                    validator: (v) => v == null ? 'Requis' : null,
-                  ),
+                  _buildPlaceDropdowns(),
                   const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    value: _placeArriveeId,
-                    decoration: const InputDecoration(labelText: 'Lieu d\'arrivée *'),
-                    items: _placesController.places
-                        .map((p) => DropdownMenuItem(value: p.id, child: Text(p.nom)))
-                        .toList(),
-                    onChanged: (v) => setState(() => _placeArriveeId = v),
-                    validator: (v) => v == null ? 'Requis' : null,
-                  ),
-                  const SizedBox(height: 16),
-                  AppInput(
-                    label: 'Montant (MRU) *', 
-                    controller: _montantCtrl, 
-                    validator: Validators.number, 
-                    keyboardType: TextInputType.number
-                  ),
-                  AppInput(label: 'Description (Optionnel)', controller: _descCtrl, maxLines: 3),
-
+                  _buildInputFields(),
                   const SizedBox(height: 30),
-                  AppButton(
-                    text: 'ENREGISTRER LA COURSE',
-                    isLoading: _controller.isSaving.value,
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        _controller.addJournalLine(
-                          journalId: widget.journalId,
-                          livreurId: widget.livreurId,
-                          placeDepartId: _placeDepartId!,
-                          placeArriveeId: _placeArriveeId!,
-                          montant: double.parse(_montantCtrl.text),
-                          description: _descCtrl.text,
-                        );
-                      }
-                    },
-                  ),
+                  _buildSubmitButton(),
                 ],
               ),
             ),
           ),
         );
       }),
+    );
+  }
+
+  Widget _buildPlaceDropdowns() {
+    return Column(
+      children: [
+        DropdownButtonFormField<String>(
+          value: _placeDepartId,
+          decoration: const InputDecoration(labelText: 'Lieu de départ *'),
+          items: _placesController.places
+              .map((p) => DropdownMenuItem(value: p.id, child: Text(p.nom)))
+              .toList(),
+          onChanged: (v) => setState(() => _placeDepartId = v),
+          validator: (v) => v == null ? 'Requis' : null,
+        ),
+        const SizedBox(height: 16),
+        DropdownButtonFormField<String>(
+          value: _placeArriveeId,
+          decoration: const InputDecoration(labelText: 'Lieu d\'arrivée *'),
+          items: _placesController.places
+              .map((p) => DropdownMenuItem(value: p.id, child: Text(p.nom)))
+              .toList(),
+          onChanged: (v) => setState(() => _placeArriveeId = v),
+          validator: (v) => v == null ? 'Requis' : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInputFields() {
+    return Column(
+      children: [
+        AppInput(
+          label: 'Montant (MRU) *', 
+          controller: _montantCtrl, 
+          validator: Validators.number, 
+          keyboardType: TextInputType.number
+        ),
+        AppInput(label: 'Description (Optionnel)', controller: _descCtrl, maxLines: 3),
+      ],
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return AppButton(
+      text: 'ENREGISTRER LA COURSE',
+      isLoading: _controller.isSaving.value,
+      onPressed: () {
+        if (_formKey.currentState!.validate()) {
+          _controller.addJournalLine(
+            journalId: widget.journalId,
+            livreurId: widget.livreurId,
+            placeDepartId: _placeDepartId!,
+            placeArriveeId: _placeArriveeId!,
+            montant: double.parse(_montantCtrl.text),
+            description: _descCtrl.text,
+          );
+        }
+      },
     );
   }
 }
