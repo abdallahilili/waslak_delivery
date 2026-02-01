@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import '../controllers/journal_controller.dart';
-import '../models/journal_model.dart';
+import '../../controllers/journal_controller.dart';
+import '../../models/journal_model.dart';
 import '../widgets/journal_item.dart';
 import 'journal_form_page.dart';
-import '../../livreurs/models/livreur_model.dart';
+import '../../../livreurs/models/livreur_model.dart';
 
 class JournalListPage extends StatefulWidget {
   final LivreurModel livreur;

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:dio/dio.dart';
-import '../controllers/places_controller.dart';
-import '../models/place_model.dart';
+import '../../controllers/places_controller.dart';
+import '../../models/place_model.dart';
 import 'dart:async';
 
 class PlaceFormPage extends StatefulWidget {

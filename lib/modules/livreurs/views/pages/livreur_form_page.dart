@@ -2,11 +2,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import '../controllers/livreur_controller.dart';
-import '../models/livreur_model.dart';
-import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/app_input.dart';
-import '../../../core/utils/validators.dart';
+import '../../controllers/livreur_controller.dart';
+import '../../models/livreur_model.dart';
+import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_input.dart';
+import '../../../../core/utils/validators.dart';
 
 class LivreurFormPage extends StatefulWidget {
   final LivreurModel? livreur;

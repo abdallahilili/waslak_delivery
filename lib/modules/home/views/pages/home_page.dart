@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/home_controller.dart';
-import '../../livreurs/views/livreur_list_page.dart';
+import '../../controllers/home_controller.dart';
+import '../../../livreurs/views/pages/livreur_list_page.dart';
 
-import '../../places/views/places_list_page.dart';
+import '../../../places/views/pages/places_list_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({Key? key}) : super(key: key);

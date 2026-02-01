@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../auth/controllers/auth_controller.dart';
-import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/app_input.dart';
-import '../../../core/utils/validators.dart';
+import '../../../auth/controllers/auth_controller.dart';
+import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_input.dart';
+import '../../../../core/utils/validators.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);

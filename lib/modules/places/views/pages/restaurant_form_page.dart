@@ -2,11 +2,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import '../controllers/restaurant_controller.dart';
-import '../models/restaurant_model.dart';
-import '../models/place_model.dart';
-import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/app_input.dart';
+import '../../controllers/restaurant_controller.dart';
+import '../../models/restaurant_model.dart';
+import '../../models/place_model.dart';
+import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_input.dart';
 
 class RestaurantFormPage extends StatefulWidget {
   final PlaceModel place;

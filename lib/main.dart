@@ -4,8 +4,8 @@ import 'core/config/supabase_config.dart';
 import 'shared/theme/app_theme.dart';
 import 'routes/app_routes.dart';
 import 'modules/auth/bindings/auth_binding.dart';
-import 'modules/auth/views/login_page.dart';
-import 'modules/home/views/home_page.dart';
+import 'modules/auth/views/pages/login_page.dart';
+import 'modules/home/views/pages/home_page.dart';
 
 import 'package:intl/date_symbol_data_local.dart';
 

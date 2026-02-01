@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:icons_plus/icons_plus.dart';
-import '../models/livreur_model.dart';
-import '../controllers/livreur_controller.dart';
+import '../../models/livreur_model.dart';
+import '../../controllers/livreur_controller.dart';
 import 'livreur_form_page.dart';
-import '../../journal/views/journal_list_page.dart';
-import '../../../shared/widgets/image_viewer_widget.dart';
+import '../../../journal/views/pages/journal_list_page.dart';
+import '../../../../shared/widgets/image_viewer_widget.dart';
 
 class LivreurDetailPage extends StatelessWidget {
   final LivreurModel livreur;

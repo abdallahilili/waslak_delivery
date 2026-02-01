@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/places_controller.dart';
-import '../controllers/restaurant_controller.dart';
+import '../../controllers/places_controller.dart';
+import '../../controllers/restaurant_controller.dart';
 import 'place_form_page.dart';
 import 'restaurant_detail_page.dart';
 import 'restaurant_form_page.dart';

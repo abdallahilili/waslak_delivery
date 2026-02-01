@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import '../models/livreur_model.dart';
 
 import 'package:icons_plus/icons_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import '../../models/livreur_model.dart';
 
 class LivreurCard extends StatelessWidget {
   final LivreurModel livreur;

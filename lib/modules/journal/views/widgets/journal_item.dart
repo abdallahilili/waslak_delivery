@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/utils/formatters.dart';
-import '../models/journal_ligne_model.dart';
 import '../../../../shared/theme/app_theme.dart';
+import '../../models/journal_ligne_model.dart';
 
 class JournalItem extends StatelessWidget {
   final JournalLigneModel entry;

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/restaurant_controller.dart';
-import '../models/restaurant_model.dart';
-import '../models/place_model.dart';
+import '../../controllers/restaurant_controller.dart';
+import '../../models/restaurant_model.dart';
+import '../../models/place_model.dart';
 import 'restaurant_form_page.dart';
 
 class RestaurantDetailPage extends StatefulWidget {

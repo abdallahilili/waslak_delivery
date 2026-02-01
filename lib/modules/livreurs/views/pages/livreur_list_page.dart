@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/livreur_controller.dart';
+import '../../controllers/livreur_controller.dart';
+import '../widgets/livreur_card.dart';
 import 'livreur_form_page.dart';
 import 'livreur_detail_page.dart';
-import '../widgets/livreur_card.dart';
-import '../../../shared/widgets/loading.dart';
-import '../../../shared/widgets/app_input.dart';
+import '../../../../shared/widgets/loading.dart';
+import '../../../../shared/widgets/app_input.dart';
 
 class LivreurListPage extends StatelessWidget {
   LivreurListPage({Key? key}) : super(key: key);

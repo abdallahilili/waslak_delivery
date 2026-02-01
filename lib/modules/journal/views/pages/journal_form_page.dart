@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/journal_controller.dart';
-import '../../places/controllers/places_controller.dart';
-import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/app_input.dart';
-import '../../../core/utils/validators.dart';
+import '../../controllers/journal_controller.dart';
+import '../../../places/controllers/places_controller.dart';
+import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_input.dart';
+import '../../../../core/utils/validators.dart';
 
 class JournalFormPage extends StatefulWidget {
   final String livreurId;
