@@ -93,7 +93,7 @@ class LivreurDetailPage extends StatelessWidget {
                   Text(livreur.telephone, style: const TextStyle(fontSize: 16, color: Colors.grey)),
                   
                   const SizedBox(height: 20),
-                  _buildStatusBadge(livreur.statut),
+                  _buildStatusBadge(livreur.statut, context),
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -146,9 +146,9 @@ class LivreurDetailPage extends StatelessWidget {
                   const Divider(),
                   Row(
                     children: [
-                      _buildStatCard('Total', livreur.nbLivraisonsTotal.toString(), Colors.blue),
-                      _buildStatCard('Complétées', livreur.nbLivraisonsCompletees.toString(), Colors.green),
-                      _buildStatCard('Annulées', livreur.nbLivraisonsAnnulees.toString(), Colors.red),
+                      _buildStatCard('Total', livreur.nbLivraisonsTotal.toString(), Theme.of(context).primaryColor),
+                      _buildStatCard('Complétées', livreur.nbLivraisonsCompletees.toString(), Colors.green), // Keep green for success/completed
+                      _buildStatCard('Annulées', livreur.nbLivraisonsAnnulees.toString(), Theme.of(context).colorScheme.error),
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -181,10 +181,10 @@ class LivreurDetailPage extends StatelessWidget {
       ),
     );
   }
-  Widget _buildStatusBadge(String statut) {
+  Widget _buildStatusBadge(String statut, BuildContext context) {
     Color color = Colors.grey;
-    if (statut == 'actif') color = Colors.green;
-    if (statut == 'inactif') color = Colors.red;
+    if (statut == 'actif') color = Theme.of(context).primaryColor; // Match app theme
+    if (statut == 'inactif') color = Theme.of(context).colorScheme.error;
     if (statut == 'suspendu') color = Colors.orange;
 
     return Container(

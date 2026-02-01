@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class AppTheme {
+class AppColors {
   // Anciennes couleurs
   static const Color primaryColor = Color(0xFF2E7D32); // Forest Green
   static const Color secondaryColor = Color(0xFF4CAF50); // Standard Green

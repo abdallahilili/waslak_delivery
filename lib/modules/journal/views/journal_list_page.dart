@@ -55,7 +55,7 @@ class _JournalListPageState extends State<JournalListPage> {
                   icon: const Icon(Icons.add),
                   label: const Text('OUVRIR UN NOUVEAU JOURNAL'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: Theme.of(context).primaryColor,
                     foregroundColor: Colors.white,
                   ),
                 ),
@@ -77,7 +77,7 @@ class _JournalListPageState extends State<JournalListPage> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
                 side: isOpen
-                    ? const BorderSide(color: Colors.blue, width: 1.5)
+                    ? BorderSide(color: Theme.of(context).primaryColor, width: 1.5)
                     : BorderSide.none,
               ),
               child: ExpansionTile(
@@ -85,11 +85,11 @@ class _JournalListPageState extends State<JournalListPage> {
                 shape: Border.all(color: Colors.transparent),
                 leading: CircleAvatar(
                   backgroundColor: isOpen
-                      ? Colors.green.withOpacity(0.1)
+                      ? Theme.of(context).primaryColor.withOpacity(0.1)
                       : Colors.grey.withOpacity(0.1),
                   child: Icon(
                     isOpen ? Icons.lock_open : Icons.lock,
-                    color: isOpen ? Colors.green : Colors.grey,
+                    color: isOpen ? Theme.of(context).primaryColor : Colors.grey,
                   ),
                 ),
                 title: Text(
@@ -106,7 +106,7 @@ class _JournalListPageState extends State<JournalListPage> {
                   "Total: ${journal.total} MRU",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: isOpen ? Colors.blue : Colors.grey,
+                    color: isOpen ? Theme.of(context).primaryColor : Colors.grey,
                     fontSize: 16,
                   ),
                 ),
@@ -128,7 +128,7 @@ class _JournalListPageState extends State<JournalListPage> {
             onPressed: () => controller.createJournal(widget.livreur.id),
             label: const Text("Nouveau Journal"),
             icon: const Icon(Icons.add),
-            backgroundColor: Colors.blue,
+            backgroundColor: Theme.of(context).primaryColor,
           );
         } else {
           return FloatingActionButton(
@@ -138,7 +138,7 @@ class _JournalListPageState extends State<JournalListPage> {
                 journalId: openJournal.id,
               ),
             ),
-            backgroundColor: Colors.blue,
+            backgroundColor: Theme.of(context).primaryColor,
             child: const Icon(Icons.bike_scooter, color: Colors.white),
             tooltip: "Ajouter course",
           );

@@ -4,7 +4,7 @@ import '../models/place_model.dart';
 
 class PlacesController extends GetxController {
   final _client = Supabase.instance.client;
-  
+
   final places = <PlaceModel>[].obs;
   final isLoading = false.obs;
   final isSaving = false.obs;
@@ -36,6 +36,7 @@ class PlacesController extends GetxController {
       Get.back();
       Get.snackbar('Succès', 'Place ajoutée avec succès');
     } catch (e) {
+      print('Erreur lors de la création: $e');
       Get.snackbar('Erreur', 'Erreur lors de la création: $e');
     } finally {
       isSaving.value = false;

@@ -24,15 +24,22 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // If no specific color is asked, we use the theme's button style (usually Primary Color)
+    // If a specific color is asked, we override it.
+    
     return ElevatedButton(
       onPressed: isLoading ? null : onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: backgroundColor ?? const Color(0xFFEAF6E9),
+        // Use theme default (null) if no prop provided
+        backgroundColor: backgroundColor, 
+        foregroundColor: textColor,
         minimumSize: fullWidth
             ? const Size(double.infinity, 50)
             : Size(width ?? 150, height ?? 50),
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 0, 
+        // Corner radius is handled by theme, but we can keep explicit if needed or remove to use theme
+        // Theme uses 12, this used 20. Let's stick to theme generally, but if we pass null it uses theme.
+        shape: backgroundColor != null ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)) : null,
       ),
       child: isLoading
           ? const SizedBox(
@@ -46,10 +53,10 @@ class AppButton extends StatelessWidget {
           : Text(
               text,
               style: TextStyle(
-                fontFamily: 'Droid',
-                color: textColor ?? const Color(0xFF2E7D32),
+                // Inherits font family from theme (Poppins)
                 fontWeight: FontWeight.bold,
-                fontSize: 24,
+                fontSize: 16, // Standardize size
+                color: textColor, // Inherits from foregroundColor if null
               ),
             ),
     );

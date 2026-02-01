@@ -170,7 +170,7 @@ class _PlaceFormPageState extends State<PlaceFormPage> {
         title: Text(
           widget.place == null ? 'Ajouter une Place' : 'Modifier la Place',
         ),
-        backgroundColor: Colors.blue.withOpacity(0.8),
+        // backgroundColor handled by theme
       ),
       body: Form(
         key: _formKey,
@@ -296,7 +296,7 @@ class _PlaceFormPageState extends State<PlaceFormPage> {
                         width: double.infinity,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
+                            backgroundColor: Theme.of(context).primaryColor,
                             padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
                           onPressed: controller.isSaving.value

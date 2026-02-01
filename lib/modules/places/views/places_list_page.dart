@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/places_controller.dart';
+import '../controllers/restaurant_controller.dart';
 import 'place_form_page.dart';
+import 'restaurant_detail_page.dart';
+import 'restaurant_form_page.dart';
 
 class PlacesListPage extends StatelessWidget {
   const PlacesListPage({Key? key}) : super(key: key);
@@ -13,7 +16,8 @@ class PlacesListPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gestion des Places'),
-        backgroundColor: Colors.blue.withOpacity(0.8),
+        // AppBar color is handled by Theme now, or use Theme.of(context).primaryColor
+        // backgroundColor: Colors.transparent, // or remove entirely to use theme
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
@@ -28,7 +32,7 @@ class PlacesListPage extends StatelessWidget {
             final place = controller.places[index];
             return ListTile(
               leading: CircleAvatar(
-                backgroundColor: _getTypeColor(place.type),
+                backgroundColor: _getTypeColor(place.type, context),
                 child: Icon(_getTypeIcon(place.type), color: Colors.white),
               ),
               title: Text(place.nom),
@@ -47,23 +51,44 @@ class PlacesListPage extends StatelessWidget {
                   );
                 },
               ),
-              onTap: () => Get.to(() => PlaceFormPage(place: place)),
+              onTap: () async {
+                if (place.type == 'restaurant') {
+                  final restController = Get.put(RestaurantController());
+                  
+                  Get.dialog(
+                    const Center(child: CircularProgressIndicator(color: Colors.white)),
+                    barrierDismissible: false,
+                  );
+                  
+                  await restController.fetchRestaurantByPlaceId(place.id);
+                  
+                  if (Get.isDialogOpen ?? false) Get.back(); // Close loading
+                  
+                  if (restController.currentRestaurant.value != null) {
+                    Get.to(() => RestaurantDetailPage(place: place, restaurant: restController.currentRestaurant.value!));
+                  } else {
+                    Get.to(() => RestaurantFormPage(place: place));
+                  }
+                } else {
+                  Get.to(() => PlaceFormPage(place: place));
+                }
+              },
             );
           },
         );
       }),
       floatingActionButton: FloatingActionButton(
         onPressed: () => Get.to(() => const PlaceFormPage()),
-        backgroundColor: Colors.blue,
+        backgroundColor: Theme.of(context).primaryColor,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
 
-  Color _getTypeColor(String type) {
+  Color _getTypeColor(String type, BuildContext context) {
     switch (type) {
       case 'restaurant': return Colors.orange;
-      case 'client': return Colors.green;
+      case 'client': return Theme.of(context).primaryColor; // Green for client
       case 'depot': return Colors.blueGrey;
       default: return Colors.grey;
     }
