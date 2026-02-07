@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import '../../controllers/places_controller.dart';
 import '../../models/place_model.dart';
 import '../widgets/place_map_view.dart';
-import 'dart:async';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class PlaceFormPage extends StatefulWidget {
@@ -126,7 +125,7 @@ class _PlaceFormPageState extends State<PlaceFormPage> {
                   shrinkWrap: true,
                   itemCount: _predictions.length,
                   itemBuilder: (context, index) {
-                    final p = _predictions[index] as PlaceModel;
+                    final p = _predictions[index];
                     return ListTile(
                       title: Text(p.nom),
                       subtitle: Text(p.adresse ?? ''),
