@@ -8,6 +8,7 @@ class PlaceFormMap extends StatelessWidget {
   final Completer<GoogleMapController> mapController;
   final Function(LatLng) onMapTapped;
   final Marker? marker;
+  final TextEditingController searchController;
   final Function(String) onSearchChanged;
   final List<dynamic> predictions;
   final Function(String) onPredictionTap;
@@ -19,6 +20,7 @@ class PlaceFormMap extends StatelessWidget {
     required this.mapController,
     required this.onMapTapped,
     this.marker,
+    required this.searchController,
     required this.onSearchChanged,
     required this.predictions,
     required this.onPredictionTap,
@@ -45,31 +47,53 @@ class PlaceFormMap extends StatelessWidget {
             children: [
               Card(
                 child: TextField(
-                  decoration: const InputDecoration(
+                  controller: searchController,
+                  decoration: InputDecoration(
                     hintText: 'Rechercher une adresse...',
-                    prefixIcon: Icon(Icons.search),
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.arrow_forward, color: Colors.blue),
+                      onPressed: () {
+                         onSearchChanged(searchController.text);
+                      },
+                    ),
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.all(12),
+                    contentPadding: const EdgeInsets.all(12),
                   ),
                   onChanged: onSearchChanged,
+                  onSubmitted: onSearchChanged,
                 ),
               ),
               if (predictions.isNotEmpty)
-                Container(
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
+                Padding(
+                  padding: const EdgeInsets.only(top: 4.0),
+                  child: Material(
+                    elevation: 8,
                     borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: ListView.builder(
-                    itemCount: predictions.length,
-                    itemBuilder: (context, index) {
-                      final p = predictions[index];
-                      return ListTile(
-                        title: Text(p['description']),
-                        onTap: () => onPredictionTap(p['place_id']),
-                      );
-                    },
+                    child: Container(
+                      constraints: const BoxConstraints(maxHeight: 300),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        padding: EdgeInsets.zero,
+                        itemCount: predictions.length,
+                        itemBuilder: (context, index) {
+                          final p = predictions[index];
+                          return ListTile(
+                            leading: const Icon(Icons.location_on, color: Colors.red, size: 20),
+                            title: Text(
+                              p['description'], 
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)
+                            ),
+                            onTap: () => onPredictionTap(p['place_id']),
+                          );
+                        },
+                      ),
+                    ),
                   ),
                 ),
             ],

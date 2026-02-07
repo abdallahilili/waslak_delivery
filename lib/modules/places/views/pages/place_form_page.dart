@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:dio/dio.dart';
 import '../../controllers/places_controller.dart';
 import '../../models/place_model.dart';
-import '../widgets/place_form_map.dart';
+import '../widgets/place_map_view.dart';
 import 'dart:async';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class PlaceFormPage extends StatefulWidget {
   final PlaceModel? place;
@@ -23,19 +22,14 @@ class _PlaceFormPageState extends State<PlaceFormPage> {
   final _nomController = TextEditingController();
   final _phoneController = TextEditingController();
   final _adresseController = TextEditingController();
+  final _searchController = TextEditingController();
 
   String _type = 'client';
   double _lat = 18.0735;
   double _lng = -15.9582;
   bool _actif = true;
 
-  Completer<GoogleMapController> _mapController = Completer();
-  Marker? _marker;
-
-  final String _apiKey = 'AIzaSyDe5CA8nrN_lgix4lanomjg66YhQlP2goM';
-  final _dio = Dio();
-  List<dynamic> _predictions = [];
-  Timer? _debounce;
+  List<PlaceModel> _predictions = [];
 
   @override
   void initState() {
@@ -49,119 +43,123 @@ class _PlaceFormPageState extends State<PlaceFormPage> {
       _lng = widget.place!.longitude;
       _actif = widget.place!.actif;
     }
-    _marker = Marker(
-      markerId: const MarkerId('selected_pos'),
-      position: LatLng(_lat, _lng),
-    );
   }
 
-  void _onMapTapped(LatLng position) {
+  void _onPositionChanged(LatLng pos) {
     setState(() {
-      _lat = position.latitude;
-      _lng = position.longitude;
-      _marker = Marker(
-        markerId: const MarkerId('selected_pos'),
-        position: position,
-      );
+      _lat = pos.latitude;
+      _lng = pos.longitude;
     });
   }
 
-  Future<void> _moveCamera(LatLng position) async {
-    final GoogleMapController controller = await _mapController.future;
-    controller.animateCamera(CameraUpdate.newLatLng(position));
-    _onMapTapped(position);
-  }
-
-  Future<void> _searchPlaces(String query) async {
-    if (query.isEmpty) {
+  void _searchPlaces(String query) {
+    if (query.length < 2) {
       setState(() => _predictions = []);
       return;
     }
-    try {
-      final response = await _dio.get(
-        'https://maps.googleapis.com/maps/api/place/autocomplete/json',
-        queryParameters: {
-          'input': query,
-          'key': _apiKey,
-          'language': 'fr',
-          'components': 'country:mr',
-        },
-      );
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data['status'] == 'OK' || data['status'] == 'ZERO_RESULTS') {
-          setState(() => _predictions = data['predictions']);
-        }
-      }
-    } catch (e) {
-      print('Autocomplete exception: $e');
-    }
+
+    // Rechercher dans la liste locale du controller (déjà chargée depuis Supabase)
+    final results = controller.places.where((p) {
+      final name = p.nom.toLowerCase();
+      final addr = (p.adresse ?? '').toLowerCase();
+      final q = query.toLowerCase();
+      return name.contains(q) || addr.contains(q);
+    }).toList();
+
+    setState(() {
+      _predictions = results;
+    });
   }
 
-  Future<void> _getPlaceDetails(String placeId) async {
-    try {
-      final response = await _dio.get(
-        'https://maps.googleapis.com/maps/api/place/details/json',
-        queryParameters: {'place_id': placeId, 'key': _apiKey},
-      );
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data['status'] == 'OK') {
-          final result = data['result'];
-          final lat = result['geometry']['location']['lat'];
-          final lng = result['geometry']['location']['lng'];
-          final address = result['formatted_address'];
-          setState(() {
-            _adresseController.text = address;
-            _predictions = [];
-          });
-          _moveCamera(LatLng(lat, lng));
-        }
-      }
-    } catch (e) {
-      print('Place details exception: $e');
-    }
+  void _selectPlace(PlaceModel place) {
+    setState(() {
+      _nomController.text = place.nom;
+      _phoneController.text = place.telephone ?? '';
+      _adresseController.text = place.adresse ?? '';
+      _type = place.type;
+      _lat = place.latitude;
+      _lng = place.longitude;
+      _actif = place.actif;
+      _predictions = [];
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.place == null ? 'Ajouter une Place' : 'Modifier la Place'),
+        title: Text(
+          widget.place == null ? 'Ajouter une Place' : 'Modifier la Place',
+        ),
       ),
       body: Form(
         key: _formKey,
         child: Column(
           children: [
+            // BARRE DE RECHERCHE DECOUPLEE POUR TESTER L'EVENEMENT
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Card(
+                elevation: 4,
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Taper "test" pour essayer...',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.send),
+                      onPressed: () => _searchPlaces(_searchController.text),
+                    ),
+                  ),
+                  onChanged: (v) {
+                    print('ON_CHANGED: $v');
+                    _searchPlaces(v);
+                  },
+                ),
+              ),
+            ),
+            if (_predictions.isNotEmpty)
+              Container(
+                constraints: const BoxConstraints(maxHeight: 200),
+                color: Colors.white,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _predictions.length,
+                  itemBuilder: (context, index) {
+                    final p = _predictions[index] as PlaceModel;
+                    return ListTile(
+                      title: Text(p.nom),
+                      subtitle: Text(p.adresse ?? ''),
+                      leading: const Icon(
+                        Icons.location_on,
+                        color: Colors.blue,
+                      ),
+                      onTap: () => _selectPlace(p),
+                    );
+                  },
+                ),
+              ),
             Expanded(
               flex: 3,
-              child: PlaceFormMap(
-                lat: _lat,
-                lng: _lng,
-                mapController: _mapController,
-                onMapTapped: _onMapTapped,
-                marker: _marker,
-                onSearchChanged: (val) {
-                  if (_debounce?.isActive ?? false) _debounce!.cancel();
-                  _debounce = Timer(const Duration(milliseconds: 500), () => _searchPlaces(val));
-                },
-                predictions: _predictions,
-                onPredictionTap: (id) => _getPlaceDetails(id),
-              ),
+              child: Obx(() {
+                // Force la lecture de l'observable pour éviter l'erreur "improper use of GetX"
+                final otherPlaces = controller.places.toList();
+                return PlaceMapView(
+                  lat: _lat,
+                  lng: _lng,
+                  onPositionChanged: _onPositionChanged,
+                  otherPlaces: otherPlaces,
+                );
+              }),
             ),
             Expanded(
               flex: 4,
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    _buildFields(),
-                    const SizedBox(height: 20),
-                    _buildSubmitButton(),
-                  ],
-                ),
+                child: _buildFields(),
               ),
             ),
+            _buildSubmitButton(),
           ],
         ),
       ),
@@ -181,7 +179,10 @@ class _PlaceFormPageState extends State<PlaceFormPage> {
           value: _type,
           decoration: const InputDecoration(labelText: 'Type'),
           items: ['restaurant', 'client', 'depot', 'autre']
-              .map((e) => DropdownMenuItem(value: e, child: Text(e.capitalizeFirst!)))
+              .map(
+                (e) =>
+                    DropdownMenuItem(value: e, child: Text(e.capitalizeFirst!)),
+              )
               .toList(),
           onChanged: (v) => setState(() => _type = v!),
         ),
@@ -240,7 +241,10 @@ class _PlaceFormPageState extends State<PlaceFormPage> {
                 },
           child: controller.isSaving.value
               ? const CircularProgressIndicator(color: Colors.white)
-              : const Text('ENREGISTRER', style: TextStyle(color: Colors.white)),
+              : const Text(
+                  'ENREGISTRER',
+                  style: TextStyle(color: Colors.white),
+                ),
         ),
       ),
     );

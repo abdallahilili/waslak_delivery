@@ -6,6 +6,7 @@ import '../../models/place_model.dart';
 import '../widgets/restaurant_detail_app_bar.dart';
 import '../widgets/restaurant_detail_info.dart';
 import '../widgets/restaurant_detail_menu.dart';
+import '../widgets/restaurant_detail_location.dart';
 import 'restaurant_form_page.dart';
 
 class RestaurantDetailPage extends StatefulWidget {
@@ -20,12 +21,21 @@ class RestaurantDetailPage extends StatefulWidget {
 
 class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
   late RestaurantController controller;
+  final Rx<PlaceModel> _currentPlace = Rx<PlaceModel>(PlaceModel(
+    id: '',
+    nom: '',
+    type: '',
+    latitude: 0.0,
+    longitude: 0.0,
+    createdAt: DateTime.now(),
+  ));
 
   @override
   void initState() {
     super.initState();
     controller = Get.put(RestaurantController());
     controller.currentRestaurant.value = widget.restaurant;
+    _currentPlace.value = widget.place;
   }
 
   @override
@@ -40,6 +50,12 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
           slivers: [
             RestaurantDetailAppBar(restaurant: rest, controller: controller),
             RestaurantDetailInfo(restaurant: rest),
+            SliverToBoxAdapter(
+              child: Obx(() => RestaurantDetailLocation(
+                    place: _currentPlace.value,
+                    onPlaceUpdated: (updated) => _currentPlace.value = updated,
+                  )),
+            ),
             RestaurantDetailMenu(restaurant: rest),
             const SliverToBoxAdapter(child: SizedBox(height: 80)),
           ],

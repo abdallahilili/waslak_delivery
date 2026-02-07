@@ -32,8 +32,8 @@ class PlacesController extends GetxController {
     try {
       isSaving.value = true;
       await _client.from('places').insert(place.toMap());
-      fetchPlaces();
-      Get.back();
+      await fetchPlaces(); // On attend que la liste soit à jour
+      Get.back(result: place);
       Get.snackbar('Succès', 'Place ajoutée avec succès');
     } catch (e) {
       print('Erreur lors de la création: $e');
@@ -47,8 +47,9 @@ class PlacesController extends GetxController {
     try {
       isSaving.value = true;
       await _client.from('places').update(updates).eq('id', id);
-      fetchPlaces();
-      Get.back();
+      await fetchPlaces();
+      final updatedPlace = places.firstWhere((p) => p.id == id);
+      Get.back(result: updatedPlace);
       Get.snackbar('Succès', 'Place mise à jour');
     } catch (e) {
       Get.snackbar('Erreur', 'Erreur lors de la mise à jour: $e');
