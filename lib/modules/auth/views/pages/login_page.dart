@@ -55,7 +55,7 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 48),
                 AppInput(
                   label: 'Téléphone',
-                  hint: 'Ex: 40123456',
+                  hint: 'Ex: 31177008',
                   controller: _phoneController,
                   validator: Validators.requiredField,
                   keyboardType: TextInputType.phone,

@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'core/config/supabase_config.dart';
 import 'shared/theme/app_theme.dart';
 import 'routes/app_routes.dart';
-import 'modules/auth/bindings/auth_binding.dart';
+import 'core/bindings/initial_binding.dart';
 import 'modules/auth/views/pages/login_page.dart';
 import 'modules/home/views/pages/home_page.dart';
 
@@ -27,15 +27,17 @@ class MyApp extends StatelessWidget {
       title: 'Gestion Livreurs',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      initialBinding: AuthBinding(),
+      initialBinding: InitialBinding(),
       initialRoute: Routes.LOGIN,
       getPages: [
         GetPage(
           name: Routes.LOGIN,
           page: () => const LoginPage(),
-          binding: AuthBinding(),
         ),
-        GetPage(name: Routes.HOME, page: () => const HomePage()),
+        GetPage(
+          name: Routes.HOME, 
+          page: () => const HomePage()
+        ),
       ],
     );
   }
