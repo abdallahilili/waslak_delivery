@@ -5,6 +5,7 @@ import '../../modules/journal/controllers/journal_controller.dart';
 import '../../modules/livreurs/controllers/livreur_controller.dart';
 import '../../modules/places/controllers/places_controller.dart';
 import '../../modules/places/controllers/restaurant_controller.dart';
+import '../../modules/dashboard/controllers/dashboard_controller.dart';
 
 class InitialBinding extends Bindings {
   @override
@@ -19,5 +20,6 @@ class InitialBinding extends Bindings {
     Get.lazyPut<LivreurController>(() => LivreurController());
     Get.lazyPut<PlacesController>(() => PlacesController());
     Get.lazyPut<RestaurantController>(() => RestaurantController());
+    Get.lazyPut<DashboardController>(() => DashboardController());
   }
 }

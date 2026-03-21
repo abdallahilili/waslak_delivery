@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../dashboard/views/dashboard_page.dart';
 import '../../controllers/home_controller.dart';
 import '../../../livreurs/views/pages/livreur_list_page.dart';
 
@@ -48,7 +49,9 @@ class HomePage extends StatelessWidget {
               Text(
                 "Bienvenue, Admin",
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold, color: Colors.blueGrey[800]),
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueGrey[800],
+                ),
               ),
               const SizedBox(height: 5),
               Text(
@@ -61,7 +64,7 @@ class HomePage extends StatelessWidget {
                   crossAxisCount: 2,
                   crossAxisSpacing: 20,
                   mainAxisSpacing: 20,
-                  childAspectRatio: 0.85, 
+                  childAspectRatio: 0.85,
                   children: [
                     _DashboardCard(
                       title: 'Livreurs',
@@ -76,6 +79,13 @@ class HomePage extends StatelessWidget {
                       icon: Icons.place,
                       color: Colors.orange,
                       onTap: () => Get.to(() => const PlacesListPage()),
+                    ),
+                    _DashboardCard(
+                      title: 'Dashboard',
+                      count: controller.placesCount.value.toString(),
+                      icon: Icons.dashboard,
+                      color: Colors.red,
+                      onTap: () => Get.to(() => const DashboardPage()),
                     ),
                   ],
                 ),
@@ -100,7 +110,10 @@ class HomePage extends StatelessWidget {
               children: [
                 Icon(Icons.admin_panel_settings, size: 50, color: Colors.white),
                 SizedBox(height: 10),
-                Text('Gestion Livreurs', style: TextStyle(color: Colors.white, fontSize: 18)),
+                Text(
+                  'Gestion Livreurs',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
               ],
             ),
           ),
@@ -220,9 +233,13 @@ class _DashboardCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        Icon(Icons.arrow_forward_ios, size: 16, color: color.withOpacity(0.5)),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16,
+                          color: color.withOpacity(0.5),
+                        ),
                       ],
-                    )
+                    ),
                   ],
                 ),
               ),

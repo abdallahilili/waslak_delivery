@@ -6,6 +6,7 @@ abstract class Routes {
   static const LIVREUR_FORM = '/livreur-form';
   static const JOURNAL = '/journal';
   static const JOURNAL_FORM = '/journal-form';
+  static const DASHBOARD = '/dashboard';
 }
 
 class AppPaths {

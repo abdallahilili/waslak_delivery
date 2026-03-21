@@ -6,6 +6,7 @@ import 'routes/app_routes.dart';
 import 'core/bindings/initial_binding.dart';
 import 'modules/auth/views/pages/login_page.dart';
 import 'modules/home/views/pages/home_page.dart';
+import 'modules/dashboard/views/dashboard_page.dart';
 
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -37,6 +38,10 @@ class MyApp extends StatelessWidget {
         GetPage(
           name: Routes.HOME, 
           page: () => const HomePage()
+        ),
+        GetPage(
+          name: Routes.DASHBOARD, 
+          page: () => const DashboardPage()
         ),
       ],
     );
