@@ -26,6 +26,7 @@ dependencies:
   dio: ^5.4.0
   google_maps_flutter: ^2.5.3
   uuid: ^4.3.3
+  excel: ^4.0.0
 
   cupertino_icons: ^1.0.8
   geolocator: ^14.0.2

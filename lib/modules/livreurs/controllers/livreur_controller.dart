@@ -2,7 +2,11 @@ import 'dart:io';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/livreur_model.dart';
+import '../models/livreur_filter_model.dart';
 import '../../../../core/services/storage_service.dart';
+import 'package:excel/excel.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class LivreurController extends GetxController {
   final _client = Supabase.instance.client;
@@ -11,17 +15,15 @@ class LivreurController extends GetxController {
   final livreurs = <LivreurModel>[].obs;
   final isLoading = false.obs;
   final isSaving = false.obs;
+  final totalCount = 0.obs;
   
-  // Search
-  final searchQuery = ''.obs;
+  final currentFilter = LivreurFilter().obs;
+  final selectedLivreur = Rxn<LivreurModel>();
 
   @override
   void onInit() {
     super.onInit();
     fetchLivreurs();
-    
-    // Simple debounce for search
-    debounce(searchQuery, (_) => fetchLivreurs(), time: const Duration(milliseconds: 500));
   }
 
   Future<void> fetchLivreurs() async {
@@ -29,64 +31,43 @@ class LivreurController extends GetxController {
       isLoading.value = true;
       var query = _client.from('livreurs').select();
       
-      if (searchQuery.isNotEmpty) {
-        // Search by name, phone or nni
-        // Note: Supabase 'or' syntax: 'nom.ilike.%query%,telephone.ilike.%query%...'
-        final s = searchQuery.value;
-        query = query.or('nom.ilike.%$s%,telephone.ilike.%$s%,nni.ilike.%$s%');
+      final filter = currentFilter.value;
+
+      // Appliquer les filtres
+      if (filter.query != null && filter.query!.isNotEmpty) {
+        query = query.or('nom.ilike.%${filter.query}%,telephone.ilike.%${filter.query}%,nni.ilike.%${filter.query}%');
       }
 
-      final response = await query.order('created_at', ascending: false);
+      if (filter.statut != null && filter.statut != 'tous') {
+        query = query.eq('statut', filter.statut!);
+      }
+
+      if (filter.zone != null) {
+        query = query.eq('zone_service', filter.zone!);
+      }
+
+      final response = await query
+          .order('created_at', ascending: false)
+          .count(CountOption.exact);
       
-      final data = response as List<dynamic>;
+      final List<dynamic> data = response.data;
+      totalCount.value = response.count;
       livreurs.value = data.map((json) => LivreurModel.fromMap(json)).toList();
     } catch (e) {
-      Get.snackbar('Erreur', 'Impossible de charger les livreurs: $e');
+      print('Fetch error: $e');
+      Get.snackbar('Erreur', 'Impossible de charger les livreurs');
     } finally {
       isLoading.value = false;
     }
   }
 
-  Future<void> createLivreur(
-    String nom,
-    String nni,
-    String telephone,
-    String? whatsapp,
-    String statut, {
-    File? photoProfil,
-    File? photoCni,
-    File? photoCarteGrise,
-    File? photoAssurance,
-    File? photoMoto,
-  }) async {
+  Future<void> createLivreur(LivreurModel livreur) async {
     try {
       isSaving.value = true;
-
-      // Upload Images
-      String? urlProfil = photoProfil != null ? await _storageService.uploadImage(photoProfil, 'profils') : null;
-      String? urlCni = photoCni != null ? await _storageService.uploadImage(photoCni, 'docs') : null;
-      String? urlCarteGrise = photoCarteGrise != null ? await _storageService.uploadImage(photoCarteGrise, 'docs') : null;
-      String? urlAssurance = photoAssurance != null ? await _storageService.uploadImage(photoAssurance, 'docs') : null;
-      String? urlMoto = photoMoto != null ? await _storageService.uploadImage(photoMoto, 'motos') : null;
-
-      final newLivreur = {
-        'nom': nom,
-        'nni': nni,
-        'telephone': telephone,
-        'whatsapp': whatsapp,
-        'statut': statut,
-        'photo_profil_url': urlProfil,
-        'photo_cni_url': urlCni,
-        'photo_carte_grise_url': urlCarteGrise,
-        'photo_assurance_url': urlAssurance,
-        'photo_moto_url': urlMoto,
-      };
-
-      await _client.from('livreurs').insert(newLivreur);
-      
+      await _client.from('livreurs').insert(livreur.toMap());
       fetchLivreurs();
-      Get.back(); // Close form
-      Get.snackbar('Succès', 'Livreur ajouté avec succès');
+      Get.back();
+      Get.snackbar('Succès', 'Livreur créé');
     } catch (e) {
       Get.snackbar('Erreur', 'Erreur lors de la création: $e');
     } finally {
@@ -94,12 +75,22 @@ class LivreurController extends GetxController {
     }
   }
 
-  Future<void> updateLivreur(String id, Map<String, dynamic> updates) async {
+  Future<void> updateLivreur(String id, Map<String, dynamic> data) async {
     try {
       isSaving.value = true;
-      await _client.from('livreurs').update(updates).eq('id', id);
-      fetchLivreurs(); // Refresh list to reflect changes
-      Get.back();
+      await _client.from('livreurs').update(data).eq('id', id);
+      
+      // Update local state if needed
+      final index = livreurs.indexWhere((l) => l.id == id);
+      if (index != -1) {
+        // Optionnel: Re-fetch or manually update
+        fetchLivreurs();
+      }
+      
+      if (selectedLivreur.value?.id == id) {
+        getLivreurDetails(id);
+      }
+
       Get.snackbar('Succès', 'Livreur mis à jour');
     } catch (e) {
       Get.snackbar('Erreur', 'Erreur lors de la mise à jour: $e');
@@ -110,12 +101,84 @@ class LivreurController extends GetxController {
 
   Future<void> deleteLivreur(String id) async {
     try {
+      // Soft delete si vous avez un champ deleted_at, sinon delete physique
       await _client.from('livreurs').delete().eq('id', id);
       livreurs.removeWhere((l) => l.id == id);
-      Get.back(); // If inside details
       Get.snackbar('Succès', 'Livreur supprimé');
     } catch (e) {
-      Get.snackbar('Erreur', 'Impossible de supprimer: $e');
+      Get.snackbar('Erreur', 'Erreur lors de la suppression');
+    }
+  }
+
+  Future<String?> uploadDocument(File file, String folder) async {
+    try {
+      return await _storageService.uploadImage(file, folder);
+    } catch (e) {
+       Get.snackbar('Erreur', 'Upload échoué: $e');
+       return null;
+    }
+  }
+
+  Future<void> toggleStatus(String id, String newStatus) async {
+    await updateLivreur(id, {'statut': newStatus});
+  }
+
+  void searchLivreurs(String query) {
+    currentFilter.update((val) {
+      val?.query = query;
+    });
+    fetchLivreurs();
+  }
+
+  void filterLivreurs(LivreurFilter filter) {
+    currentFilter.value = filter;
+    fetchLivreurs();
+  }
+
+  Future<void> getLivreurDetails(String id) async {
+    try {
+      final response = await _client.from('livreurs').select().eq('id', id).single();
+      selectedLivreur.value = LivreurModel.fromMap(response);
+    } catch (e) {
+      Get.snackbar('Erreur', 'Détails non trouvés');
+    }
+  }
+
+  Future<void> exportToExcel() async {
+    try {
+      var excel = Excel.createExcel();
+      Sheet sheetObject = excel['Livreurs'];
+
+      // Headers
+      sheetObject.appendRow([
+        TextCellValue('ID'),
+        TextCellValue('Nom'),
+        TextCellValue('Téléphone'),
+        TextCellValue('Statut'),
+        TextCellValue('Zone'),
+        TextCellValue('Livraisons Complétées'),
+      ]);
+
+      for (var l in livreurs) {
+        sheetObject.appendRow([
+          TextCellValue(l.id),
+          TextCellValue(l.nom),
+          TextCellValue(l.telephone),
+          TextCellValue(l.statut),
+          TextCellValue(l.zoneService ?? '-'),
+          IntCellValue(l.nbLivraisonsCompletees),
+        ]);
+      }
+
+      var fileBytes = excel.save();
+      var directory = await getTemporaryDirectory();
+      File("${directory.path}/livreurs_export.xlsx")
+        ..createSync(recursive: true)
+        ..writeAsBytesSync(fileBytes!);
+
+      await Share.shareXFiles([XFile("${directory.path}/livreurs_export.xlsx")], text: 'Export des livreurs');
+    } catch (e) {
+      Get.snackbar('Erreur', 'Erreur lors de l\'export: $e');
     }
   }
 }

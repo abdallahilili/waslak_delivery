@@ -2,18 +2,16 @@ import 'package:flutter/material.dart';
 
 import 'package:icons_plus/icons_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
-
+import 'package:get/get.dart';
+// import '../../../../routes/app_routes.dart';
 import '../../models/livreur_model.dart';
+import '../pages/livreur_detail_page.dart';
 
 class LivreurCard extends StatelessWidget {
   final LivreurModel livreur;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
-  const LivreurCard({
-    Key? key,
-    required this.livreur,
-    required this.onTap,
-  }) : super(key: key);
+  const LivreurCard({super.key, required this.livreur, this.onTap});
 
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
@@ -25,57 +23,70 @@ class LivreurCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: ListTile(
-        onTap: onTap,
-        contentPadding: const EdgeInsets.all(12),
-        leading: CircleAvatar(
-          radius: 30,
-          backgroundColor: Colors.grey.shade200,
-          backgroundImage: livreur.photoProfilUrl != null
-              ? NetworkImage(livreur.photoProfilUrl!)
-              : null,
-          child: livreur.photoProfilUrl == null
-              ? const Icon(Icons.person, color: Colors.grey)
-              : null,
-        ),
-        title: Text(
-          livreur.nom,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Icon(Icons.phone, size: 14, color: Colors.grey),
-                const SizedBox(width: 4),
-                Text(livreur.telephone),
+      child: InkWell(
+        onTap: onTap ?? () => Get.to(() => LivreurDetailPage(livreur: livreur)),
+        child: ListTile(
+          contentPadding: const EdgeInsets.all(12),
+          leading: CircleAvatar(
+            radius: 30,
+            backgroundColor: Colors.grey.shade200,
+            backgroundImage: livreur.photoProfilUrl != null
+                ? NetworkImage(livreur.photoProfilUrl!)
+                : null,
+            child: livreur.photoProfilUrl == null
+                ? const Icon(Icons.person, color: Colors.grey)
+                : null,
+          ),
+          title: Text(
+            livreur.nom,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Icon(Icons.phone, size: 14, color: Colors.grey),
+                  const SizedBox(width: 4),
+                  Text(livreur.telephone),
+                ],
+              ),
+              if (livreur.nni.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  'NNI: ${livreur.nni}',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
               ],
-            ),
-            if (livreur.nni.isNotEmpty) ...[
-              const SizedBox(height: 2),
-              Text('NNI: ${livreur.nni}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
             ],
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: Icon(Bootstrap.telephone_fill, color: Theme.of(context).primaryColor),
-              onPressed: () => _launchUrl('tel:${livreur.telephone}'),
-              tooltip: 'Appeler',
-            ),
-            IconButton(
-              icon: const Icon(Bootstrap.whatsapp, color: Color(0xFF25D366)), // WhatsApp Brand Color
-              onPressed: () {
-                final phone = livreur.whatsapp?.isNotEmpty == true ? livreur.whatsapp : livreur.telephone;
-                _launchUrl('https://wa.me/$phone');
-              },
-              tooltip: 'WhatsApp',
-            ),
-          ],
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: Icon(
+                  Bootstrap.telephone_fill,
+                  color: Theme.of(context).primaryColor,
+                ),
+                onPressed: () => _launchUrl('tel:${livreur.telephone}'),
+                tooltip: 'Appeler',
+              ),
+              IconButton(
+                icon: const Icon(
+                  Bootstrap.whatsapp,
+                  color: Color(0xFF25D366),
+                ), // WhatsApp Brand Color
+                onPressed: () {
+                  final phone = livreur.whatsapp?.isNotEmpty == true
+                      ? livreur.whatsapp
+                      : livreur.telephone;
+                  _launchUrl('https://wa.me/$phone');
+                },
+                tooltip: 'WhatsApp',
+              ),
+            ],
+          ),
         ),
       ),
     );

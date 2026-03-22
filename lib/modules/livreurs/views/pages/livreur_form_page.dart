@@ -1,200 +1,326 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../controllers/livreur_controller.dart';
 import '../../models/livreur_model.dart';
-import '../../../../shared/widgets/app_button.dart';
-import '../../../../shared/widgets/app_input.dart';
-import '../../../../core/utils/validators.dart';
-import '../widgets/form_image_picker.dart';
+import '../widgets/document_uploader.dart';
 
 class LivreurFormPage extends StatefulWidget {
   final LivreurModel? livreur;
-  
-  const LivreurFormPage({Key? key, this.livreur}) : super(key: key);
+
+  const LivreurFormPage({super.key, this.livreur});
 
   @override
   State<LivreurFormPage> createState() => _LivreurFormPageState();
 }
 
 class _LivreurFormPageState extends State<LivreurFormPage> {
+  final controller = Get.find<LivreurController>();
+  int _currentStep = 0;
   final _formKey = GlobalKey<FormState>();
-  final _controller = Get.find<LivreurController>();
-  
-  late TextEditingController _nomCtrl;
-  late TextEditingController _nniCtrl;
-  late TextEditingController _phoneCtrl;
-  late TextEditingController _whatsappCtrl;
 
-  File? _profilImage, _cniImage, _carteGriseImage, _assuranceImage, _motoImage;
-  final ImagePicker _picker = ImagePicker();
-  String _statut = 'actif';
+  // Controllers Step 1
+  late TextEditingController _nomCtrl;
+  late TextEditingController _prenomCtrl;
+  late TextEditingController _nniCtrl;
+  late TextEditingController _telCtrl;
+  late TextEditingController _whatsappCtrl;
+  late TextEditingController _emailCtrl;
+  DateTime? _dateNaissance;
+
+  // Controllers Step 2
+  late TextEditingController _adresseCtrl;
+  late TextEditingController _villeCtrl;
+  late TextEditingController _quartierCtrl;
+  String? _zoneService;
+
+  // Controllers Step 3
+  String? _typeVehicule = 'moto';
+  late TextEditingController _marqueCtrl;
+  late TextEditingController _modeleCtrl;
+  late TextEditingController _immatCtrl;
+  late TextEditingController _couleurCtrl;
+  late TextEditingController _anneeCtrl;
+
+  // Step 4 (Files)
+  File? _fProfil, _fCni, _fPermis, _fCarteGrise, _fAssurance, _fMoto;
+  DateTime? _expPermis, _expAssurance;
+
+  // Step 5
+  double _commission = 10.0;
+  int _priorite = 0;
+  bool _estFavori = false;
 
   @override
   void initState() {
     super.initState();
-    _nomCtrl = TextEditingController(text: widget.livreur?.nom);
-    _nniCtrl = TextEditingController(text: widget.livreur?.nni);
-    _phoneCtrl = TextEditingController(text: widget.livreur?.telephone);
-    _whatsappCtrl = TextEditingController(text: widget.livreur?.whatsapp);
-    _statut = widget.livreur?.statut ?? 'actif';
-  }
+    final l = widget.livreur;
+    _nomCtrl = TextEditingController(text: l?.nom);
+    _prenomCtrl = TextEditingController(text: l?.prenom);
+    _nniCtrl = TextEditingController(text: l?.nni);
+    _telCtrl = TextEditingController(text: l?.telephone);
+    _whatsappCtrl = TextEditingController(text: l?.whatsapp);
+    _emailCtrl = TextEditingController(text: l?.email);
+    _dateNaissance = l?.dateNaissance;
 
-  Future<void> _pickImage(String type) async {
-    final XFile? file = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
-    if (file != null) {
-      setState(() {
-        switch (type) {
-          case 'profil': _profilImage = File(file.path); break;
-          case 'cni': _cniImage = File(file.path); break;
-          case 'carte_grise': _carteGriseImage = File(file.path); break;
-          case 'assurance': _assuranceImage = File(file.path); break;
-          case 'moto': _motoImage = File(file.path); break;
-        }
-      });
-    }
+    _adresseCtrl = TextEditingController(text: l?.adresse);
+    _villeCtrl = TextEditingController(text: l?.ville);
+    _quartierCtrl = TextEditingController(text: l?.quartier);
+    _zoneService = l?.zoneService;
+
+    _typeVehicule = l?.typeVehicule ?? 'moto';
+    _marqueCtrl = TextEditingController(text: l?.marque);
+    _modeleCtrl = TextEditingController(text: l?.modele);
+    _immatCtrl = TextEditingController(text: l?.immatriculation);
+    _couleurCtrl = TextEditingController(text: l?.couleur);
+    _anneeCtrl = TextEditingController(text: l?.annee?.toString());
+
+    _expPermis = l?.dateExpirationPermis;
+    _expAssurance = l?.dateExpirationAssurance;
+
+    _commission = l?.commissionPlateforme ?? 10.0;
+    _priorite = l?.priorite ?? 0;
+    _estFavori = l?.estFavori ?? false;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.livreur == null ? 'Ajouter Livreur' : 'Modifier Livreur')),
-      body: Obx(() => IgnorePointer(
-        ignoring: _controller.isSaving.value,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                FormImagePicker(
-                  label: 'Photo de profil',
-                  image: _profilImage,
-                  currentUrl: widget.livreur?.photoProfilUrl,
-                  type: 'profil',
-                  onTap: () => _pickImage('profil'),
-                ),
-                _buildBasicInfoSection(),
-                const Divider(),
-                _buildDocumentsSection(),
-                const SizedBox(height: 20),
-                _buildSubmitButton(),
-              ],
-            ),
+      appBar: AppBar(
+        title: Text(widget.livreur != null ? 'Modifier Livreur' : 'Nouveau Livreur'),
+      ),
+      body: Form(
+        key: _formKey,
+        child: Stepper(
+          type: StepperType.horizontal,
+          currentStep: _currentStep,
+          onStepContinue: _onStepContinue,
+          onStepCancel: _onStepCancel,
+          onStepTapped: (step) => setState(() => _currentStep = step),
+          steps: [
+            _buildStep1(),
+            _buildStep2(),
+            _buildStep3(),
+            _buildStep4(),
+            _buildStep5(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Step _buildStep1() {
+    return Step(
+      title: const Text('Perso'),
+      isActive: _currentStep >= 0,
+      content: Column(
+        children: [
+          TextFormField(controller: _nomCtrl, decoration: const InputDecoration(labelText: 'Nom *')),
+          const SizedBox(height: 8),
+          TextFormField(controller: _prenomCtrl, decoration: const InputDecoration(labelText: 'Prénom')),
+          const SizedBox(height: 8),
+          TextFormField(controller: _nniCtrl, decoration: const InputDecoration(labelText: 'NNI *'), keyboardType: TextInputType.number),
+          const SizedBox(height: 8),
+          TextFormField(controller: _telCtrl, decoration: const InputDecoration(labelText: 'Téléphone *'), keyboardType: TextInputType.phone),
+          const SizedBox(height: 8),
+          TextFormField(controller: _whatsappCtrl, decoration: const InputDecoration(labelText: 'WhatsApp'), keyboardType: TextInputType.phone),
+          const SizedBox(height: 8),
+          TextFormField(controller: _emailCtrl, decoration: const InputDecoration(labelText: 'Email'), keyboardType: TextInputType.emailAddress),
+        ],
+      ),
+    );
+  }
+
+  Step _buildStep2() {
+    return Step(
+      title: const Text('Adresse'),
+      isActive: _currentStep >= 1,
+      content: Column(
+        children: [
+          TextFormField(controller: _adresseCtrl, decoration: const InputDecoration(labelText: 'Adresse')),
+          const SizedBox(height: 8),
+          TextFormField(controller: _villeCtrl, decoration: const InputDecoration(labelText: 'Ville')),
+          const SizedBox(height: 8),
+          TextFormField(controller: _quartierCtrl, decoration: const InputDecoration(labelText: 'Quartier')),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            value: _zoneService,
+            decoration: const InputDecoration(labelText: 'Zone de service'),
+            items: const [
+              DropdownMenuItem(value: 'NKC_CENTER', child: Text('NKC Centre')),
+              DropdownMenuItem(value: 'NKC_NORTH', child: Text('NKC Nord')),
+              DropdownMenuItem(value: 'NKC_SOUTH', child: Text('NKC Sud')),
+            ],
+            onChanged: (v) => setState(() => _zoneService = v),
           ),
-        ),
-      )),
+        ],
+      ),
     );
   }
 
-  Widget _buildBasicInfoSection() {
-    return Column(
-      children: [
-        AppInput(label: 'Nom complet', controller: _nomCtrl, validator: Validators.requiredField),
-        AppInput(label: 'NNI', controller: _nniCtrl, validator: Validators.nni, keyboardType: TextInputType.number),
-        AppInput(label: 'Téléphone', controller: _phoneCtrl, validator: Validators.phoneNumber, keyboardType: TextInputType.phone),
-        AppInput(label: 'Whatsapp (Optionnel)', controller: _whatsappCtrl, keyboardType: TextInputType.phone),
-        const SizedBox(height: 10),
-        DropdownButtonFormField<String>(
-          value: _statut,
-          decoration: const InputDecoration(labelText: 'Statut du livreur'),
-          items: ['actif', 'inactif', 'suspendu']
-              .map((e) => DropdownMenuItem(value: e, child: Text(e.toUpperCase())))
-              .toList(),
-          onChanged: (v) => setState(() => _statut = v!),
-        ),
-        const SizedBox(height: 10),
-      ],
+  Step _buildStep3() {
+    return Step(
+      title: const Text('Véhicule'),
+      isActive: _currentStep >= 2,
+      content: Column(
+        children: [
+          DropdownButtonFormField<String>(
+            value: _typeVehicule,
+            decoration: const InputDecoration(labelText: 'Type de véhicule *'),
+            items: const [
+              DropdownMenuItem(value: 'moto', child: Text('Moto')),
+              DropdownMenuItem(value: 'voiture', child: Text('Voiture')),
+              DropdownMenuItem(value: 'velo', child: Text('Vélo')),
+            ],
+            onChanged: (v) => setState(() => _typeVehicule = v),
+          ),
+          const SizedBox(height: 8),
+          TextFormField(controller: _marqueCtrl, decoration: const InputDecoration(labelText: 'Marque')),
+          const SizedBox(height: 8),
+          TextFormField(controller: _modeleCtrl, decoration: const InputDecoration(labelText: 'Modèle')),
+          const SizedBox(height: 8),
+          TextFormField(controller: _immatCtrl, decoration: const InputDecoration(labelText: 'Immatriculation')),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(child: TextFormField(controller: _couleurCtrl, decoration: const InputDecoration(labelText: 'Couleur'))),
+              const SizedBox(width: 8),
+              Expanded(child: TextFormField(controller: _anneeCtrl, decoration: const InputDecoration(labelText: 'Année'), keyboardType: TextInputType.number)),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildDocumentsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Documents', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: FormImagePicker(
-                label: 'CNI',
-                image: _cniImage,
-                currentUrl: widget.livreur?.photoCniUrl,
-                type: 'cni',
-                onTap: () => _pickImage('cni'),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: FormImagePicker(
-                label: 'Carte Grise',
-                image: _carteGriseImage,
-                currentUrl: widget.livreur?.photoCarteGriseUrl,
-                type: 'carte_grise',
-                onTap: () => _pickImage('carte_grise'),
-              ),
-            ),
-          ],
-        ),
-        Row(
-          children: [
-            Expanded(
-              child: FormImagePicker(
-                label: 'Assurance',
-                image: _assuranceImage,
-                currentUrl: widget.livreur?.photoAssuranceUrl,
-                type: 'assurance',
-                onTap: () => _pickImage('assurance'),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: FormImagePicker(
-                label: 'Moto',
-                image: _motoImage,
-                currentUrl: widget.livreur?.photoMotoUrl,
-                type: 'moto',
-                onTap: () => _pickImage('moto'),
-              ),
-            ),
-          ],
-        ),
-      ],
+  Step _buildStep4() {
+    return Step(
+      title: const Text('Docs'),
+      isActive: _currentStep >= 3,
+      content: Column(
+        children: [
+          DocumentUploader(label: 'Photo Profil', initialUrl: widget.livreur?.photoProfilUrl, onFileChanged: (f) => _fProfil = f),
+          const SizedBox(height: 12),
+          DocumentUploader(label: 'Photo CNI', initialUrl: widget.livreur?.photoCniUrl, onFileChanged: (f) => _fCni = f),
+          const SizedBox(height: 12),
+          DocumentUploader(label: 'Permis de conduire', initialUrl: widget.livreur?.photoPermisUrl, onFileChanged: (f) => _fPermis = f),
+          const SizedBox(height: 12),
+          DocumentUploader(label: 'Carte Grise', initialUrl: widget.livreur?.photoCarteGriseUrl, onFileChanged: (f) => _fCarteGrise = f),
+          const SizedBox(height: 12),
+          DocumentUploader(label: 'Assurance', initialUrl: widget.livreur?.photoAssuranceUrl, onFileChanged: (f) => _fAssurance = f),
+          const SizedBox(height: 12),
+          DocumentUploader(label: 'Moto', initialUrl: widget.livreur?.photoMotoUrl, onFileChanged: (f) => _fMoto = f),
+        ],
+      ),
     );
   }
 
-  Widget _buildSubmitButton() {
-    return AppButton(
-      text: 'Enregistrer',
-      isLoading: _controller.isSaving.value,
-      onPressed: () {
-        if (_formKey.currentState!.validate()) {
-          if (widget.livreur == null) {
-            _controller.createLivreur(
-              _nomCtrl.text,
-              _nniCtrl.text,
-              _phoneCtrl.text,
-              _whatsappCtrl.text,
-              _statut,
-              photoProfil: _profilImage,
-              photoCni: _cniImage,
-              photoCarteGrise: _carteGriseImage,
-              photoAssurance: _assuranceImage,
-              photoMoto: _motoImage,
-            );
-          } else {
-            _controller.updateLivreur(widget.livreur!.id, {
-              'nom': _nomCtrl.text,
-              'nni': _nniCtrl.text,
-              'telephone': _phoneCtrl.text,
-              'whatsapp': _whatsappCtrl.text,
-              'statut': _statut,
-            });
-          }
-        }
-      },
+  Step _buildStep5() {
+    return Step(
+      title: const Text('Config'),
+      isActive: _currentStep >= 4,
+      content: Column(
+        children: [
+          const Text('Commission Plateforme (%)'),
+          Slider(
+            value: _commission,
+            min: 0,
+            max: 50,
+            divisions: 50,
+            label: '${_commission.round()}%',
+            onChanged: (v) => setState(() => _commission = v),
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<int>(
+            value: _priorite,
+            decoration: const InputDecoration(labelText: 'Priorité'),
+            items: [0, 1, 2, 3, 4, 5].map((p) => DropdownMenuItem(value: p, child: Text('Priorité $p'))).toList(),
+            onChanged: (v) => setState(() => _priorite = v ?? 0),
+          ),
+          const SizedBox(height: 12),
+          SwitchListTile(
+            title: const Text('Ajouter aux favoris'),
+            value: _estFavori,
+            activeColor: Colors.blue,
+            onChanged: (v) => setState(() => _estFavori = v),
+          ),
+        ],
+      ),
     );
+  }
+
+  void _onStepContinue() async {
+    if (_currentStep < 4) {
+      setState(() => _currentStep++);
+    } else {
+      // Save logic
+      if (_formKey.currentState!.validate()) {
+         _saveLivreur();
+      }
+    }
+  }
+
+  void _onStepCancel() {
+    if (_currentStep > 0) {
+      setState(() => _currentStep--);
+    } else {
+      Get.back();
+    }
+  }
+
+  Future<void> _saveLivreur() async {
+    Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
+    
+    try {
+      // 1. Upload new files if any
+      String? urlProfil = _fProfil != null ? await controller.uploadDocument(_fProfil!, 'profils') : widget.livreur?.photoProfilUrl;
+      String? urlCni = _fCni != null ? await controller.uploadDocument(_fCni!, 'docs') : widget.livreur?.photoCniUrl;
+      String? urlPermis = _fPermis != null ? await controller.uploadDocument(_fPermis!, 'docs') : widget.livreur?.photoPermisUrl;
+      String? urlCG = _fCarteGrise != null ? await controller.uploadDocument(_fCarteGrise!, 'docs') : widget.livreur?.photoCarteGriseUrl;
+      String? urlAss = _fAssurance != null ? await controller.uploadDocument(_fAssurance!, 'docs') : widget.livreur?.photoAssuranceUrl;
+      String? urlMoto = _fMoto != null ? await controller.uploadDocument(_fMoto!, 'motos') : widget.livreur?.photoMotoUrl;
+
+      final data = {
+        'nom': _nomCtrl.text,
+        'prenom': _prenomCtrl.text,
+        'nni': _nniCtrl.text,
+        'telephone': _telCtrl.text,
+        'whatsapp': _whatsappCtrl.text,
+        'email': _emailCtrl.text,
+        'adresse': _adresseCtrl.text,
+        'ville': _villeCtrl.text,
+        'quartier': _quartierCtrl.text,
+        'zone_service': _zoneService,
+        'type_vehicule': _typeVehicule,
+        'marque': _marqueCtrl.text,
+        'modele': _modeleCtrl.text,
+        'immatriculation': _immatCtrl.text,
+        'couleur': _couleurCtrl.text,
+        'annee': int.tryParse(_anneeCtrl.text),
+        'photo_profil_url': urlProfil,
+        'photo_cni_url': urlCni,
+        'photo_permis_url': urlPermis,
+        'photo_carte_grise_url': urlCG,
+        'photo_assurance_url': urlAss,
+        'photo_moto_url': urlMoto,
+        'commission_plateforme': _commission,
+        'priorite': _priorite,
+        'est_favori': _estFavori,
+        'statut': widget.livreur?.statut ?? 'actif',
+      };
+
+      if (widget.livreur == null) {
+        await controller.createLivreur(LivreurModel.fromMap({...data, 'id': '', 'created_at': DateTime.now().toIso8601String()}));
+      } else {
+        await controller.updateLivreur(widget.livreur!.id, data);
+      }
+      
+      Get.back(); // Close loading dialog
+      Get.back(); // Close form
+      Get.snackbar('Succès', 'Livreur enregistré avec succès');
+    } catch (e) {
+      Get.back(); // Close loading dialog
+      Get.snackbar('Erreur', 'Impossible d\'enregistrer le livreur: $e');
+    }
   }
 }
